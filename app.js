@@ -266,10 +266,31 @@ editBlogEntry(requestBody, editedData._id)
 
 // deleting a blog entry //
 
-const deleteBlogEntry = async (postId) => {
+async function fetchUser() {
   const token = JSON.parse(localStorage.getItem('token'))
+  try {
+    const currentUser = await fetch(`${BASE_URL}/users/me`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      }
+    })
+    const result = await currentUser.json()
+    console.log(result, "this is the fetch user result")
+    return result;
+  }catch (error){
+    console.error(error)
+  }
+}
+
+const deleteBlogEntry = async (postId) => {
+  const user = await fetchUser()
+  const userId = user.data._id
+  const token = JSON.parse(localStorage.getItem('token'))
+  console.log(userId, "this is userId")
+  console.log(postId, "this is the PostId")
+  if (userId == postId.author._id){
 	try {
-		const request = await fetch(`${BASE_URL}/posts/${postId}`, {
+		const request = await fetch(`${BASE_URL}/posts/${postId._id}`, {
 			method: "DELETE",
 			headers: {
 				"Content-Type": "application/json",
@@ -279,6 +300,9 @@ const deleteBlogEntry = async (postId) => {
 	} catch(e) {
 		console.error(e)
 	}
+ } else {
+   alert("You are not authorized to delete this post!")
+ }
 }
 
 $('#posts').on('click', '#delete-button', function (){
@@ -286,9 +310,8 @@ $('#posts').on('click', '#delete-button', function (){
   console.log(this)
   let deletedCard = $(this).closest('.card')
   let postData = deletedCard.data('post')
-  console.log(postData)
-  deleteBlogEntry(postData._id)
-  deletedCard.remove()
+  console.log("this is the post data", postData)
+  deleteBlogEntry(postData)
 })
 
 $('#logout').on('click', (event) => {
